@@ -69,7 +69,7 @@ public class howToExampleTest {
     @Test
     public void withSpecificationWithPOJO() {
         //GET---------------------
-        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification());
+        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification(200));
         List<UserData> users2 = given()
                 .when()//условия запроса
                 .get("/api/users?page=2") //method + endpoint
@@ -77,7 +77,7 @@ public class howToExampleTest {
                 .log().all() //вывести в консоль
                 .extract().body().jsonPath().getList("data", UserData.class); //извлечение из ответа
         //POST---------------------
-        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification());
+        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification(200));
         //готовим боди пост запроса - pojo класс
         String email = "eve.holt@reqres.in";
         String password = "pistol";
@@ -103,7 +103,7 @@ public class howToExampleTest {
     @Test
     public void withSpecificationNoPOJO() {
         //GET---------------------
-        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification());
+        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification(200));
         Response response = RestAssured.given()
                 .when()//условия запроса
                 .get("/api/users?page=2") //method + endpoint
@@ -121,7 +121,7 @@ public class howToExampleTest {
             emailg.endsWith("@reqres.in");
         }
         //POST---------------------
-        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification());
+        Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification(200));
         Map<String, String> user = new HashMap<>();//вместо body в постзапросе можно вкинуть мапу
         user.put("email", "eve.holt@reqres.in");
         user.put("password", "pistol");

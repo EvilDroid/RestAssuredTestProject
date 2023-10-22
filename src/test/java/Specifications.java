@@ -15,9 +15,9 @@ public class Specifications {
                 .build();
     }
 
-    public static ResponseSpecification responseSpecification(){
+    public static ResponseSpecification responseSpecification(int statusCode){
         return new ResponseSpecBuilder()
-                .expectStatusCode(200)
+                .expectStatusCode(statusCode)
                 .log(LogDetail.ALL) //логировать все
                 .build();
     }
