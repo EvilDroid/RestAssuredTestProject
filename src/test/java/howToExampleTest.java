@@ -3,8 +3,13 @@ import api.RegisterResponseSuccess;
 import api.UserData;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import io.restassured.http.Header;
+import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBody;
+import io.restassured.specification.RequestSpecification;
+import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
+import static org.hamcrest.Matchers.*;
 
 //Lesson here:  https://www.youtube.com/watch?v=gxzXOMxIt4w
 
@@ -137,5 +142,104 @@ public class howToExampleTest {
         JsonPath jsonPath1 = response2.jsonPath();
         String tokenh = jsonPath1.get("token");
         Assert.assertEquals("Неверный токен", "QpwL5tke4Pnpja7X4", tokenh);
+    }
+
+
+    /**
+     * AllMethods всякие полезные методы
+     */
+    @Test
+    public void allMethods() {
+        //GET---------------------
+        Response response = RestAssured.given()
+                //.header("Authorization", "Bearer " + "dfgdfgdfgdfgdfgdf") // добавить хедер
+                .when()//условия запроса
+                .contentType(ContentType.JSON)//тип контента
+                .get(BASE_URL + "/api/users?page=2") //method + endpoint
+                .then()//что делать с ответом
+                .statusCode(200)//ожидаемый статус код
+                .log().all() //вывести в консоль
+                //проверки прямо в потоке вызовов
+                .body("page", equalTo(2))//проверки
+                .body("data.id", notNullValue())//проверки
+                .body("data.first_name", notNullValue())//проверки при помощи hemcrest
+                .body("data.last_name", notNullValue())//проверки
+                .time(lessThan(5000L)) // проверить что время запроса меньше чем 5000 мс
+                .extract().response(); //извлечение ответа
+
+
+        System.out.println("response.getStatusCode(): " + response.getStatusCode()); //возвращает статус код
+        System.out.println("response.getStatusLine(): " + response.getStatusLine()); //возвращает HTTP/1.1 200 OK
+        Headers allHeaders = response.headers(); // возвращает все хедеры
+        for(Header header : allHeaders) {
+            System.out.println("Key: " + header.getName() + " Value: " + header.getValue());
+        }
+        String serverType = response.header("Server"); // возвращает конкретный хедер
+        String acceptLanguage = response.header("Content-Encoding"); // возвращает конкретный хедер
+
+        ResponseBody body = response.getBody(); // возвращает body
+        System.out.println("Response Body is: " + body.asString());
+
+        System.out.println("response.prettyPrint() :" + response.prettyPrint()); //возвращает боди в красивом виде
+        System.out.println("response.asString() :" + response.asString()); //возвращает боди строкой
+
+        JsonPath jsonPath = response.jsonPath(); //парсит ответ
+        List<String> emails = jsonPath.get("data.email"); //возвращает любой объект jsona
+        System.out.println("response.time() :" + response.time()); //возвращает время запроса
+
+
+        //POST---------------------
+        //Making body as MAP
+        Map<String, String> user = new HashMap<>();//вместо body в постзапросе можно вкинуть мапу
+        user.put("email", "eve.holt@reqres.in");
+        user.put("password", "pistol");
+
+        //Making body as jsonobject (library org.json.simple)
+        RequestSpecification request = RestAssured.given();
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("userId", "TQ123");
+        requestParams.put("isbn", "9781449325862");
+        request.header("Content-Type", "application/json"); // Add the Json to the body of the request
+        request.body(requestParams.toJSONString());
+
+        Response response2 = given()
+                .body(user)
+                .contentType(ContentType.JSON)//тип контента
+                .when()
+                .post(BASE_URL + "api/register")
+                .then()
+                .statusCode(200)//ожидаемый статус код
+                .log().all()
+                .body("id", equalTo(4))
+                .body("token", equalTo("QpwL5tke4Pnpja7X4"))
+                .extract().response();
+
+        JsonPath jsonPath1 = response2.jsonPath();
+        String token = jsonPath1.get("token");
+    }
+
+
+
+
+
+    /**
+     * json schema validation
+     */
+    @Test
+    public void jsonSchemaValidation() {
+            // manual https://www.baeldung.com/rest-assured-json-schema
+            // method GET_singleUserTest
+            // json schema converter https://www.liquid-technologies.com/online-json-to-schema-converter
+            // response to convert here https://reqres.in/
+            //dependency add https://mvnrepository.com/artifact/io.rest-assured/json-schema-validator/5.3.2
+
+            Specifications.setSpecifications(Specifications.requestSpecification(BASE_URL), Specifications.responseSpecification(200));
+            RestAssured.given()
+                    .when()
+                    .get("/api/users/2")
+                    .then()
+                    .assertThat()
+                    .body(matchesJsonSchemaInClasspath("GET_singleUser_jsonSchema.json"))
+                    .log().all();
     }
 }
